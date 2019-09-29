@@ -6,6 +6,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate,login
 from rest_framework.test import APIClient
 from rest_framework.authtoken.models import Token
+from django.contrib.sessions.models import Session
+from author.ses import Ses
+import json
 
 
 class AuthorTest(TestCase):
@@ -24,6 +27,19 @@ class AuthorTest(TestCase):
         self.user.first_name = 'olatunde'
         self.user.last_name = 'ajadi'
         self.user.save()
+
+    def test_mysession(self):
+        token,_ = Token.objects.get_or_create(user_id=1)
+        self.c.credentials(HTTP_AUTHENTICATION='Authorization: Token '+token.key)
+        my_ses = self.c.get(reverse('author:ses_view'))
+
+        print ("Tunde------------- --",my_ses.data)
+        self.assertEquals(my_ses.data['session'],{})
+
+    def test_gettoken(self):
+        reponse = self.c.get(reverse('author:token_view'))
+        print("My res-------",reponse.data)
+        self.assertNotEquals(' ',reponse.data)
 
 
     def test_author_str(self):
@@ -60,7 +76,7 @@ class AuthorTest(TestCase):
         print ("TOken -----",token)
         usertoken = self.c.post(reverse('author:login_view'),data={'username':'olatunde','password':'dannynoc'})
         # client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
-        self.assertEquals(token.key,usertoken.content)
+        self.assertEquals(token.key,usertoken.content.decode("utf-8"))
 
     def test_login_view(self):
         response = self.c.post('/a/login',data={'username':'olatunde','password':'dannynoc'})
